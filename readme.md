@@ -1,5 +1,7 @@
 A Very Simple Script for People who want to check the amount of money their players have in their City. No need to enter Complex query in the database I got you covered with this Script.
 
+## Youtube Video ##
+https://youtu.be/9lldlXt-wK0
 
 ## Features ###
 1) Check Top number of Players Money
