@@ -1,0 +1,7 @@
+{
+    "enter_top_people": "Please Enter the top people you want to check",
+    "minimum_bank": "Enter Minimum Bank Amount",
+    "no_result": "No Result Fetched from the database",
+    "cheater": "Player tried to check players money. Most Probably a Cheater",
+    "not_allowed": "You are not allowed to use this"
+}

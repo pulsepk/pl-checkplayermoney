@@ -1,16 +1,36 @@
-A Very Simple Script for People who want to check the amount of money their players have in their City. No need to enter Complex query in the database I got you covered with this Script.
+# Pulse Check Player Money | ESX, QBCore
+#
+- A Very Simple Script for People who want to check the amount of money their players have in their City. No need to enter Complex query in the database I got you covered with this Script.
 
-## Youtube Video ##
-https://youtu.be/9lldlXt-wK0
+##
+![Image](https://i.imgur.com/tOH0Wsr.png)
 
-## Features ###
-1) Check Top number of Players Money
-2) Check by minimum bank amount
-3) Check Their cash and money
-4) Can be said to any job so state faction people can check to impose taxes on them in rp
+##
+![Video Preview] (https://youtu.be/9lldlXt-wK0)
+
+Check the below documentation link for installation
+## Documentation
+https://docs.pulsescripts.dev/
+##
+
+## Features
+######
+- Support ESX, QBCore Frameworks
+- Check Players with Highest Money
+- Check Top number of Players Money
+- Supports Player Bank, cash, Black Money and Crypto
+- ACE Permissions
+
+######
+
+##
+## Support, Scripts & More
+- [Script Store](https://pulsescripts.tebex.io/)
+- [Join the Discord For Support](https://discord.gg/c6gXmtEf3H)
+######
+
+## Dependencies
+- [ox_lib](https://github.com/overextended/ox_lib/releases)
+##
 
 
-# Installation #
-1) Add script to your server resources folder
-2) type ensure pl-checkplayermoney in the server.cfg
-3) restart the server
