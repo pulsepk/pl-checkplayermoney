@@ -3,7 +3,7 @@ games { 'gta5' }
 
 author 'PulsePK https://discord.gg/P7NFTeqwQb'
 description 'Check Player with most Money'
-version '1.1.0'
+version '1.1.1'
 
 lua54 'yes'
 

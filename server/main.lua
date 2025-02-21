@@ -1,4 +1,4 @@
-
+lib.locale()
 local resourceName ="pl-checkplayermoney"
 
 lib.versionCheck('pulsepk/pl-checkplayermoney')
@@ -129,8 +129,8 @@ RegisterCommand(Config.Command, function(source)
     if IsPlayerAceAllowed(src, 'checkplayermoney') then
         TriggerClientEvent('pl-checkplayermoney:openmenu', src)
     else
-        TriggerClientEvent('pl-checkplayermoney:notification', src, locale("not_allowed"), 'error')
-    end
+        TriggerClientEvent('pl-checkplayermoney:notification', src, locale("no_result"), 'error')
+   end
 end)
 
 local WaterMark = function()
