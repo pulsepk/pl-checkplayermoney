@@ -6,7 +6,7 @@
 ![Image](https://r2.fivemanage.com/sg0WhTDFbEhB957nFhh9t/checkplayermoney-thumbnailyt.png)
 
 ##
-![Video Preview](https://youtu.be/9lldlXt-wK0)
+- [Video Preview](https://youtu.be/9lldlXt-wK0)
 
 Check the below documentation link for installation
 ## Documentation
