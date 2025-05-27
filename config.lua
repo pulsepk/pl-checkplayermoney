@@ -1,7 +1,7 @@
 Config = {} 
 
-Config.Framework = "ESX" --"ESX" or "QBCore"
+Config.Framework = "QBCore" --"ESX" or "QBCore" | For QBox use QBCore
 
-Config.Notify = 'ox' --ox, esx, okok,qb,wasabi,custom
+Config.Notify = 'ox' --ox, custom
 
 Config.Command = 'checkplayermoney'

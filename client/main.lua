@@ -2,16 +2,8 @@ lib.locale()
 
 RegisterNetEvent('pl-checkplayermoney:notification')
 AddEventHandler('pl-checkplayermoney:notification', function(message, type)
-    if Config.Notify == 'qb' then
-        TriggerEvent("QBCore:Notify", message, type, 6000)
-    elseif Config.Notify == 'ox' then
+    if Config.Notify == 'ox' then
         TriggerEvent('ox_lib:notify', {description = message, type = type or "success"})
-    elseif Config.Notify == 'esx' then
-        TriggerEvent("esx:showNotification", message)
-    elseif Config.Notify == 'okok' then
-        TriggerEvent('okokNotify:Alert', message, 6000, type)
-    elseif Config.Notify == 'wasabi' then
-        exports.wasabi_notify:notify('PL Check Money', message, 6000, type, false, 'fas fa-ghost')
     elseif Config.Notify == 'custom' then
         -- Add your custom notifications here
     end
@@ -21,26 +13,26 @@ end)
 RegisterNetEvent('pl-checkplayermoney:SendPlayerBank')
 AddEventHandler('pl-checkplayermoney:SendPlayerBank', function(playerData)
     local options = {}
-    for _, playerBankAmount in ipairs(playerData) do
-        
+    for _, player in ipairs(playerData) do
         local option = {
-            title = playerBankAmount.name,
-            description = 'Bank: ' .. playerBankAmount.bankAmount .. ' | Citizen ID: ' .. playerBankAmount.cid,
+            title = "🧑 " .. player.name,
+            description = string.format("🏦 %s | 🆔 %s", player.bankAmount, player.cid),
             metadata = {
-                {label = 'Bank', value = playerBankAmount.bankAmount},
-                {label = 'ID', value = playerBankAmount.cid},
-                {label = 'Name', value = playerBankAmount.name},
+                {label = 'Name', value = player.name},
+                {label = 'Citizen ID', value = player.cid},
+                {label = 'Bank Balance', value = "$" .. player.bankAmount},
             },
             args = {
-                bank = playerBankAmount.bankAmount,
-                cid = playerBankAmount.cid,
+                bank = player.bankAmount,
+                cid = player.cid,
             },
         }
         table.insert(options, option)
     end
+
     lib.registerContext({
         id = 'pl-checkplayermoney',
-        title = "Player Money",
+        title = "💰 Player Bank Info",
         options = options
     })
 
@@ -50,40 +42,32 @@ end)
 RegisterNetEvent('pl-checkplayermoney:SendPlayerCashandCrypto')
 AddEventHandler('pl-checkplayermoney:SendPlayerCashandCrypto', function(playerData)
     local options = {}
-    for _, playerBankAmount in ipairs(playerData) do
-        local description = 'Bank: ' .. playerBankAmount.bankAmount .. 
-                            ' | Citizen ID: ' .. playerBankAmount.cid .. 
-                            ' | Cash: ' .. playerBankAmount.cash_amount
-        if Config.Framework == "ESX" then
-            description = description .. ' | Black Money: ' .. playerBankAmount.crypto_amount
-        elseif Config.Framework == "QBCore" then
-            description = description .. ' | Crypto: ' .. playerBankAmount.crypto_amount
-        end
-    
+    for _, player in ipairs(playerData) do
+        local cryptoLabel = Config.Framework == "ESX" and "Black Money" or "Crypto"
         local option = {
-            title = playerBankAmount.name,
-            description = description,
+            title = "🧑 " .. player.name,
+            description = string.format("💵 %s | 🏦 %s | 🆔 %s | 🪙 %s", player.cash_amount, player.bankAmount, player.cid, player.crypto_amount),
             metadata = {
-                {label = 'Bank', value = playerBankAmount.bankAmount},
-                {label = 'Cash', value = playerBankAmount.cash_amount},
-                {label = 'ID', value = playerBankAmount.cid},
-                {label = 'Name', value = playerBankAmount.name}
+                {label = 'Name', value = player.name},
+                {label = 'Citizen ID', value = player.cid},
+                {label = 'Cash', value = "$" .. player.cash_amount},
+                {label = 'Bank Balance', value = "$" .. player.bankAmount},
+                {label = cryptoLabel, value = "$" .. player.crypto_amount},
             },
             args = {
-                bank = playerBankAmount.bankAmount,
-                cash = playerBankAmount.cash_amount,
-                crypto = playerBankAmount.crypto_amount,
-                cid = playerBankAmount.cid
+                bank = player.bankAmount,
+                cash = player.cash_amount,
+                crypto = player.crypto_amount,
+                cid = player.cid
             }
         }
-        local cryptoLabel = Config.Framework == "ESX" and "Black Money" or "Crypto"
-        table.insert(option.metadata, {label = cryptoLabel, value = playerBankAmount.crypto_amount})
+
         table.insert(options, option)
     end
-    
+
     lib.registerContext({
         id = 'pl-checkplayermoney',
-        title = "Player Money",
+        title = "💰 Player Wallet Overview",
         options = options
     })
 
@@ -92,26 +76,41 @@ end)
 
 RegisterNetEvent('pl-checkplayermoney:openmenu')
 AddEventHandler('pl-checkplayermoney:openmenu', function()
-    local input = {
-        {type = 'number', label = 'Top People', description = locale("enter_top_people")},
-        {type = 'number', label = 'Amount', description = locale("minimum_bank")}
+    local inputs = {
+        {
+            type = 'number',
+            label = '🔝 Show Top Players',
+            description = locale("enter_top_people") or "Enter how many top players to display"
+        },
+        {
+            type = 'number',
+            label = '💰 Minimum Bank Balance',
+            description = locale("minimum_bank") or "Players with bank above this amount"
+        }
     }
-    if Config.Framework == "ESX" then
-        table.insert(input, {type = 'checkbox', label = 'Show Cash and Black Money'})
-    elseif Config.Framework == "QBCore" then
-        table.insert(input, {type = 'checkbox', label = 'Show Cash and Crypto'})
-    end
-    
-    local input = lib.inputDialog('Check Player Money', input)
+
+    -- Add checkbox depending on framework
+    local checkboxLabel = (Config.Framework == "ESX")
+        and '💵 Include Cash + Black Money'
+        or '💵 Include Cash + Crypto'
+
+    table.insert(inputs, {
+        type = 'checkbox',
+        label = checkboxLabel,
+        description = "Check to include cash and " .. (Config.Framework == "ESX" and "black money" or "crypto")
+    })
+
+    local input = lib.inputDialog('📊 Check Player Money', inputs)
+
     if input then
         local topPeople = input[1]
         local minimumBankAmount = tonumber(input[2])
-        local showCashAndCrypto = input[3]
+        local includeExtras = input[3]
 
-        if topPeople then
+        if topPeople and topPeople > 0 then
             lib.callback.await('pl-checkplayermoney:server:checktoppeople', false, topPeople)
-         elseif minimumBankAmount then
-            if showCashAndCrypto then
+        elseif minimumBankAmount then
+            if includeExtras then
                 lib.callback.await('pl-checkplayermoney:server:checkcashandcrypto', true, minimumBankAmount)
             else
                 lib.callback.await('pl-checkplayermoney:server:checkbank', false, minimumBankAmount)
@@ -119,4 +118,5 @@ AddEventHandler('pl-checkplayermoney:openmenu', function()
         end
     end
 end)
+
 

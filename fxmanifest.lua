@@ -1,9 +1,9 @@
 fx_version 'cerulean'
 games { 'gta5' }
 
-author 'PulsePK https://discord.gg/P7NFTeqwQb'
+author 'PulseScripts'
 description 'Check Player with most Money'
-version '1.1.1'
+version '1.1.2'
 
 lua54 'yes'
 
