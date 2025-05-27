@@ -3,14 +3,14 @@
 - A Very Simple Script for People who want to check the amount of money their players have in their City. No need to enter Complex query in the database I got you covered with this Script.
 
 ##
-![Image](https://i.imgur.com/tOH0Wsr.png)
+![Image](https://r2.fivemanage.com/sg0WhTDFbEhB957nFhh9t/checkplayermoney-thumbnailyt.png)
 
 ##
-![Video Preview] (https://youtu.be/9lldlXt-wK0)
+![Video Preview](https://youtu.be/9lldlXt-wK0)
 
 Check the below documentation link for installation
 ## Documentation
-https://docs.pulsescripts.dev/
+- [Click Here](https://docs.pulsescripts.dev/)
 ##
 
 ## Features
