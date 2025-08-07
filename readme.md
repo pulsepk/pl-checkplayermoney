@@ -1,6 +1,6 @@
 [![youtube preview](https://r2.fivemanage.com/sg0WhTDFbEhB957nFhh9t/checkplayermoney-thumbnailyt.png)](https://youtu.be/9lldlXt-wK0)
 
-A Very Simple Script for People who want to check the amount of money their players have in their City. No need to enter Complex query in the database I got you covered with this Script.
+A Very Simple Script for People who want  to check the amount of money their players have in their City. No need to enter Complex query in the database I got you covered with this Script.
 
 ## Features
 ######
