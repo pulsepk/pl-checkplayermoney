@@ -3,7 +3,7 @@ games { 'gta5' }
 
 author 'PulseScripts - pulsescripts.com'
 description 'Check Player with most Money'
-version '1.1.3'
+version '1.1.4'
 
 lua54 'yes'
 
