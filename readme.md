@@ -7,11 +7,12 @@ A Very Simple Script for People who want to check the amount of money their play
 
 ## Features
 ######
-- Support ESX, QBCore Frameworks
+- Supports ESX, QBCore, and QBox frameworks (auto-detected via pl_lib — no manual config)
 - Check Players with Highest Money
 - Check Top number of Players Money
-- Supports Player Bank, cash, Black Money and Crypto
+- Supports Player Bank, Cash, Black Money and Crypto
 - ACE Permissions
+- Notify and UI system auto-detected via pl_lib (ox_lib, lation_ui, and more)
 
 ######
 
@@ -23,10 +24,25 @@ A Very Simple Script for People who want to check the amount of money their play
 
 ## Dependencies
 - [ox_lib](https://github.com/overextended/ox_lib/releases)
+- [oxmysql](https://github.com/overextended/oxmysql/releases)
+- [pl_lib](https://github.com/pulsepk/pl_lib/releases)
 ##
 
 ## Installation Guide
-Checkout our documentation page for instructions on installing the script. [Click Here](https://pulsescripts.gitbook.io/)
+1. Ensure `ox_lib`, `oxmysql`, and `pl_lib` are installed and started **before** this resource.
+2. Drop `pl-checkplayermoney` into your resources folder and add `ensure pl-checkplayermoney` to your `server.cfg`.
+3. Grant the ACE permission to allow access:
+   ```
+   add_ace group.admin checkplayermoney allow
+   ```
+4. Restart the resource or reboot the server.
+
+> Framework, notify system, and UI components are all **auto-detected by pl_lib** — no `Config.Framework` or `Config.Notify` settings needed.
+
+### `config.lua`
+| Option | Default | Description |
+|---|---|---|
+| `Config.Command` | `'checkplayermoney'` | The chat command used to open the money overview menu |
 
 ## Paid Scripts
 If you liked our free scripts and want to contribute, please check out our paid scripts
@@ -44,6 +60,3 @@ If you liked our free scripts and want to contribute, please check out our paid 
 * 🍬 [Bubble Gum Cafe](https://pulsescripts.com/product/6707950)
 * 💊 [Drug Selling](https://pulsescripts.com/product/drugsellingv2)
 * 🛑 [Wheel Clamper](https://pulsescripts.com/product/6805299)
-
-
-
