@@ -13,22 +13,20 @@ shared_scripts {
 }
 
 client_scripts {
-    'client/bridge/*',
     'client/main.lua'
-   
 }
+
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
-    'server/bridge/*',
     'server/main.lua'
 }
 
 dependencies {
-    'ox_lib'
+    'ox_lib',
+    'oxmysql',
+    'pl_lib'
 }
 
 files {
     'locales/en.json'
 }
-
-
