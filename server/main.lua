@@ -1,146 +1,170 @@
 lib.locale()
-local resourceName ="pl-checkplayermoney"
 
-lib.versionCheck('pulsepk/pl-checkplayermoney')
+local resourceName = 'pl-checkplayermoney'
+local framework    = exports.pl_lib:GetFramework()
 
-lib.callback.register('pl-checkplayermoney:server:checkbank', function(source, minimumBankAmount)
-    local src = source
-    local Player = getPlayer(src)
-    local Identifier = GetPlayerIdentifier(src)
-    local PlayerName = getPlayerName(src)
-    if IsPlayerAceAllowed(src, 'checkplayermoney') then
-        local query = nil
-        if Config.Framework == "ESX" then
-            query = "SELECT identifier, firstname, lastname, JSON_EXTRACT(accounts, '$.bank') AS bank_amount FROM users WHERE CAST(JSON_EXTRACT(accounts, '$.bank') AS DECIMAL) > " .. minimumBankAmount .. ";"
-        elseif Config.Framework == "QBCore" then
-            query = "SELECT citizenid, name, JSON_EXTRACT(money, '$.bank') AS bank_amount FROM players WHERE CAST(JSON_EXTRACT(money, '$.bank') AS DECIMAL) > " .. minimumBankAmount .. ";"
-        else
-            print("Error: Unknown framework!")
-            return
-        end
-        MySQL.Async.fetchAll(query, {}, function(result)
-            if result and #result > 0 then
-                local playerData = {}
-                for _, row in ipairs(result) do
-                    local playerId = row.identifier or row.citizenid
-                    local playerName = (row.firstname and row.lastname) and (row.firstname .. ' ' .. row.lastname) or row.name
-                    local playerBankAmount = row.bank_amount
+exports.pl_lib:CheckVersion(resourceName, true)
 
-                    table.insert(playerData, {cid = playerId, name = playerName, bankAmount = playerBankAmount})
-                end
+-- Builds the framework-specific SQL WHERE clause table
+local SQL = {}
 
-                TriggerClientEvent('pl-checkplayermoney:SendPlayerBank', src, playerData)
-            else
-                TriggerClientEvent('pl-checkplayermoney:notification', src, locale("no_result"), 'error')
+if framework == 'esx' then
+    SQL.checkbank = [[
+        SELECT identifier, firstname, lastname,
+               JSON_EXTRACT(accounts, '$.bank') AS bank_amount
+        FROM users
+        WHERE CAST(JSON_EXTRACT(accounts, '$.bank') AS DECIMAL) > ?
+    ]]
+    SQL.checkcashandcrypto = [[
+        SELECT identifier, firstname, lastname,
+               JSON_EXTRACT(accounts, '$.bank')         AS bank_amount,
+               JSON_EXTRACT(accounts, '$.black_money')  AS crypto_amount,
+               JSON_EXTRACT(accounts, '$.money')        AS cash_amount
+        FROM users
+        WHERE CAST(JSON_EXTRACT(accounts, '$.bank') AS DECIMAL) > ?
+    ]]
+    SQL.checktoppeople = [[
+        SELECT identifier, firstname, lastname,
+               JSON_EXTRACT(accounts, '$.bank')         AS bank_amount,
+               JSON_EXTRACT(accounts, '$.black_money')  AS crypto_amount,
+               JSON_EXTRACT(accounts, '$.money')        AS cash_amount
+        FROM users
+        ORDER BY CAST(JSON_EXTRACT(accounts, '$.bank') AS DECIMAL) DESC
+        LIMIT ?
+    ]]
+elseif framework == 'qb' or framework == 'qbox' then
+    SQL.checkbank = [[
+        SELECT citizenid, name,
+               JSON_EXTRACT(money, '$.bank') AS bank_amount
+        FROM players
+        WHERE CAST(JSON_EXTRACT(money, '$.bank') AS DECIMAL) > ?
+    ]]
+    SQL.checkcashandcrypto = [[
+        SELECT citizenid, name,
+               JSON_EXTRACT(money, '$.bank')   AS bank_amount,
+               JSON_EXTRACT(money, '$.crypto') AS crypto_amount,
+               JSON_EXTRACT(money, '$.cash')   AS cash_amount
+        FROM players
+        WHERE CAST(JSON_EXTRACT(money, '$.bank') AS DECIMAL) > ?
+    ]]
+    SQL.checktoppeople = [[
+        SELECT citizenid, name,
+               JSON_EXTRACT(money, '$.bank')   AS bank_amount,
+               JSON_EXTRACT(money, '$.crypto') AS crypto_amount,
+               JSON_EXTRACT(money, '$.cash')   AS cash_amount
+        FROM players
+        ORDER BY CAST(JSON_EXTRACT(money, '$.bank') AS DECIMAL) DESC
+        LIMIT ?
+    ]]
+else
+    print('^1[' .. resourceName .. '] No compatible framework detected — script disabled.^0')
+end
+
+local function isAllowed(src)
+    return IsPlayerAceAllowed(src, 'checkplayermoney')
+end
+
+local function denyLog(src)
+    local id   = exports.pl_lib:GetPlayerIdentifier(src) or 'unknown'
+    local name = exports.pl_lib:GetPlayerName(src)       or 'unknown'
+    print('**Name:** ' .. name .. '\n**Identifier:** ' .. id .. locale('cheater'))
+end
+
+local function buildRow(row)
+    return {
+        cid          = row.identifier or row.citizenid,
+        name         = (row.firstname and row.lastname)
+                       and (row.firstname .. ' ' .. row.lastname)
+                       or  row.name,
+        bankAmount   = row.bank_amount,
+        crypto_amount = row.crypto_amount,
+        cash_amount  = row.cash_amount,
+    }
+end
+
+-- ── callbacks ────────────────────────────────────────────────────────────────
+
+lib.callback.register('pl-checkplayermoney:server:checkbank', function(source, rawAmount)
+    local src    = source
+    local amount = tonumber(rawAmount)
+    if not amount or amount < 0 then return end
+    if not isAllowed(src) then denyLog(src) return end
+    if not SQL.checkbank then return end
+
+    MySQL.query(SQL.checkbank, {amount}, function(result)
+        if result and #result > 0 then
+            local playerData = {}
+            for _, row in ipairs(result) do
+                table.insert(playerData, {
+                    cid        = row.identifier or row.citizenid,
+                    name       = (row.firstname and row.lastname)
+                                 and (row.firstname .. ' ' .. row.lastname)
+                                 or  row.name,
+                    bankAmount = row.bank_amount,
+                })
             end
-        end)
-    else
-        print('**Name:** '..PlayerName..'\n**Identifier:** '..Identifier.. locale("cheater"))
-    end 
+            TriggerClientEvent('pl-checkplayermoney:SendPlayerBank', src, playerData)
+        else
+            TriggerClientEvent('pl-checkplayermoney:notification', src, locale('no_result'), 'error')
+        end
+    end)
 end)
 
+lib.callback.register('pl-checkplayermoney:server:checkcashandcrypto', function(source, rawAmount)
+    local src    = source
+    local amount = tonumber(rawAmount)
+    if not amount or amount < 0 then return end
+    if not isAllowed(src) then denyLog(src) return end
+    if not SQL.checkcashandcrypto then return end
 
-
-lib.callback.register('pl-checkplayermoney:server:checkcashandcrypto', function(source, minimumBankAmount)
-    local src = source
-    local Player = getPlayer(src)
-    local Identifier = GetPlayerIdentifier(src)
-    local PlayerName = getPlayerName(src)
-    if IsPlayerAceAllowed(src, 'checkplayermoney') then
-        local query = nil
-        if Config.Framework == "ESX" then
-            query = "SELECT identifier, firstname, lastname, JSON_EXTRACT(accounts, '$.bank') AS bank_amount, JSON_EXTRACT(accounts, '$.black_money') AS black_amount, JSON_EXTRACT(accounts, '$.money') AS cash_amount FROM users WHERE CAST(JSON_EXTRACT(accounts, '$.bank') AS DECIMAL) > " .. minimumBankAmount .. ";"
-        elseif Config.Framework == "QBCore" then
-            query = "SELECT citizenid, name, JSON_EXTRACT(money, '$.bank') AS bank_amount, JSON_EXTRACT(money, '$.crypto') AS crypto_amount, JSON_EXTRACT(money, '$.cash') AS cash_amount FROM players WHERE CAST(JSON_EXTRACT(money, '$.bank') AS DECIMAL) > " .. minimumBankAmount .. ";"
-        else
-            print("Error: Unknown framework!")
-            return
-        end
-        MySQL.Async.fetchAll(query, {}, function(result)
-            if result then
-                local playerData = {}
-                for _, row in ipairs(result) do
-                    local playerId = row.identifier or row.citizenid
-                    local playerName = (row.firstname and row.lastname) and (row.firstname .. ' ' .. row.lastname) or row.name
-                    local playerBankAmount = row.bank_amount
-                    local cryptoAmount = row.crypto_amount or row.black_amount
-                    local cashAmount = row.cash_amount
-                    table.insert(playerData, {cid = playerId, name = playerName, bankAmount = playerBankAmount,crypto_amount= cryptoAmount,cash_amount=cashAmount})
-                end
-
-                TriggerClientEvent('pl-checkplayermoney:SendPlayerCashandCrypto', source, playerData)
-            else
-                TriggerClientEvent('pl-checkplayermoney:notification',src,locale("no_result"),'error')
+    MySQL.query(SQL.checkcashandcrypto, {amount}, function(result)
+        if result then
+            local playerData = {}
+            for _, row in ipairs(result) do
+                table.insert(playerData, buildRow(row))
             end
-        end)
-    else
-        print('**Name:** '..PlayerName..'\n**Identifier:** '..Identifier..locale("cheater"))
-    end
+            TriggerClientEvent('pl-checkplayermoney:SendPlayerCashandCrypto', src, playerData)
+        else
+            TriggerClientEvent('pl-checkplayermoney:notification', src, locale('no_result'), 'error')
+        end
+    end)
 end)
 
+lib.callback.register('pl-checkplayermoney:server:checktoppeople', function(source, rawLimit)
+    local src   = source
+    local limit = tonumber(rawLimit)
+    if not limit or limit < 1 or limit > 1000 then return end
+    if not isAllowed(src) then denyLog(src) return end
+    if not SQL.checktoppeople then return end
 
-lib.callback.register('pl-checkplayermoney:server:checktoppeople', function(source, toppeople)
-    local src = source
-    local Player = getPlayer(src)
-    local Identifier = GetPlayerIdentifier(src)
-    local PlayerName = getPlayerName(src)
-    if IsPlayerAceAllowed(src, 'checkplayermoney') then
-        local query = nil
-        if Config.Framework == "ESX" then
-            query = "SELECT identifier, firstname, lastname, JSON_EXTRACT(accounts, '$.bank') AS bank_amount, JSON_EXTRACT(accounts, '$.black_money') AS black_amount, JSON_EXTRACT(accounts, '$.money') AS money_amount FROM users ORDER BY CAST(JSON_EXTRACT(accounts, '$.bank') AS DECIMAL) DESC LIMIT " .. toppeople .. ";"
-        elseif Config.Framework == "QBCore" then
-            query = "SELECT citizenid, name, JSON_EXTRACT(money, '$.bank') AS bank_amount, JSON_EXTRACT(money, '$.crypto') AS crypto_amount, JSON_EXTRACT(money, '$.cash') AS cash_amount FROM players ORDER BY CAST(JSON_EXTRACT(money, '$.bank') AS DECIMAL) DESC LIMIT " .. toppeople .. ";"
-        else
-            print("Error: Unknown framework!")
-            return
-        end
-        MySQL.Async.fetchAll(query, {}, function(result)
-            if result and #result > 0 then
-                local playerData = {}
-                for _, row in ipairs(result) do
-                    local playerId = row.identifier or row.citizenid
-                    local playerName = (row.firstname and row.lastname) and (row.firstname..' '..row.lastname) or row.name
-                    local playerBankAmount = row.bank_amount
-                    local cryptoAmount = row.black_amount or row.crypto_amount
-                    local cashAmount = row.money_amount or row.cash_amount
-    
-                    table.insert(playerData, {
-                        cid = playerId, 
-                        name = playerName, 
-                        bankAmount = playerBankAmount, 
-                        crypto_amount = cryptoAmount, 
-                        cash_amount = cashAmount
-                    })
-                end
-    
-                TriggerClientEvent('pl-checkplayermoney:SendPlayerCashandCrypto', src, playerData)
-            else
-                TriggerClientEvent('pl-checkplayermoney:notification', src, locale("no_result"), 'error')
+    MySQL.query(SQL.checktoppeople, {limit}, function(result)
+        if result and #result > 0 then
+            local playerData = {}
+            for _, row in ipairs(result) do
+                table.insert(playerData, buildRow(row))
             end
-        end)
-    else
-        print('**Name:** '..PlayerName..'\n**Identifier:** '..Identifier..locale("cheater"))
-    end
+            TriggerClientEvent('pl-checkplayermoney:SendPlayerCashandCrypto', src, playerData)
+        else
+            TriggerClientEvent('pl-checkplayermoney:notification', src, locale('no_result'), 'error')
+        end
+    end)
 end)
 
+-- ── command ──────────────────────────────────────────────────────────────────
 
 RegisterCommand(Config.Command, function(source)
     local src = source
-    if IsPlayerAceAllowed(src, 'checkplayermoney') then
+    if isAllowed(src) then
         TriggerClientEvent('pl-checkplayermoney:openmenu', src)
     else
-        TriggerClientEvent('pl-checkplayermoney:notification', src, locale("no_result"), 'error')
-   end
+        TriggerClientEvent('pl-checkplayermoney:notification', src, locale('not_allowed'), 'error')
+    end
 end)
 
-local WaterMark = function()
-    SetTimeout(1500, function()
-        print('^1['..resourceName..'] ^2Thank you for Downloading the Script^0')
-        print('^1['..resourceName..'] ^2If you encounter any issues please Join the discord https://discord.gg/c6gXmtEf3H to get support..^0')
-        print('^1['..resourceName..'] ^2Enjoy a secret 20% OFF any script of your choice on https://pulsescripts.com/^0')
-        print('^1['..resourceName..'] ^2Using the coupon code: SPECIAL20 (one-time use coupon, choose wisely)^0')
-    
-    end)
-end
+-- ── startup message ──────────────────────────────────────────────────────────
 
-WaterMark()
+SetTimeout(1500, function()
+    print('^1[' .. resourceName .. '] ^2Thank you for Downloading the Script^0')
+    print('^1[' .. resourceName .. '] ^2Join our Discord for support: https://discord.gg/c6gXmtEf3H^0')
+    print('^1[' .. resourceName .. '] ^220%% OFF any script — coupon: SPECIAL20 → https://pulsescripts.com/^0')
+end)
